@@ -15,4 +15,14 @@ data class GeniusSong(
     val id: Int,
 
     val url: String
-)
+) {
+    fun toSong(lyrics: String): Song {
+        return Song(
+            fullTitle,
+            headerImageThumbnailUrl,
+            headerImageUrl,
+            id,
+            url, lyrics
+        )
+    }
+}

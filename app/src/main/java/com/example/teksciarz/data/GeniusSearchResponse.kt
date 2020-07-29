@@ -1,6 +1,5 @@
 package com.example.teksciarz.data
 
-import com.example.teksciarz.SongRepository
 import com.google.gson.annotations.SerializedName
 
 data class GeniusSearchData (
