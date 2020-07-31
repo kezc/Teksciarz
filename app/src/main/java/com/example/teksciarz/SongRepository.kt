@@ -9,9 +9,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class SongRepository(private val geniusService: GeniusService) {
+
     suspend fun getSongByArtistAndTitle(artist: String, title: String): Song? {
         val song = getSongsList(artist, title).firstOrNull()
-        return song?.let { it.toSong(getSongLyrics(it)) }
+        return song?.let { it.toSong(artist, title, getSongLyrics(it)) }
     }
 
     private suspend fun getSongLyrics(song: GeniusSong) = withContext(Dispatchers.IO) {

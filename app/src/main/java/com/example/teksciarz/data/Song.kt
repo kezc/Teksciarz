@@ -1,12 +1,11 @@
 package com.example.teksciarz.data
 
-import com.google.gson.annotations.SerializedName
-
 data class Song(
-    val fullTitle: String,
-    val headerImageThumbnailUrl: String,
-    val headerImageUrl: String,
+    val title: String,
+    val artist: String,
+    val imageUrl: String,
+    val imageThumbnailUrl: String?,
     val id: Int,
     val url: String,
-    val lyrics: String
+    val lyrics: String?
 )
