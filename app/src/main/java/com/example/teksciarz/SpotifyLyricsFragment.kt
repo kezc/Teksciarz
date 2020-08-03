@@ -54,10 +54,5 @@ class SpotifyLyricsFragment : Fragment() {
         return view
     }
 
-    override fun onStop() {
-        super.onStop()
-        Log.d("SpotifyLyricsFragment", "On stop")
-        viewModel.disconnectFromSpotify()
-    }
 
 }

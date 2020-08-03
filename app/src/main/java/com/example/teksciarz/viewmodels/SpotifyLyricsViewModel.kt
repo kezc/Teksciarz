@@ -15,9 +15,11 @@ import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.Track
 import kotlinx.coroutines.launch
 
+private const val TAG = "SpotifyLyricsViewModel"
+private const val CLIENT_ID = "a7dc1dd3f7e24e4e9b7fd4a7b7ed93bd"
+private const val REDIRECT_URI = "com.example.teksciarz://callback"
+
 class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(application) {
-    private val CLIENT_ID = "a7dc1dd3f7e24e4e9b7fd4a7b7ed93bd"
-    private val REDIRECT_URI = "com.example.teksciarz://callback"
 
     private val _currentSong = MutableLiveData<Song?>()
     val currentSong: LiveData<Song?>
@@ -28,7 +30,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
         get() = _loading
 
 
-    private val rep = SongRepository(GeniusService.create())
+    private val rep = SongRepository(GeniusService.create()) //TODO Move to constructor
     private var recentSongArtist = ""
     private var recentSongTitle = ""
 
@@ -40,9 +42,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
 
     override fun onCleared() {
         super.onCleared()
-        spotifyAppRemote?.let {
-            SpotifyAppRemote.disconnect(it)
-        }
+        disconnectFromSpotify()
     }
 
     private fun connectToSpotify() {
@@ -58,12 +58,12 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
             connectionParams,
             object : Connector.ConnectionListener {
                 override fun onFailure(throwable: Throwable?) {
-                    Log.e("SpotifyLyricsFragment", throwable!!.message, throwable);
+                    Log.e(TAG, throwable!!.message, throwable);
                     _loading.value = null
                 }
 
                 override fun onConnected(spotifyAppRemote: SpotifyAppRemote) {
-                    Log.d("SpotifyLyricsFragment", "Connected! Yay!");
+                    Log.d(TAG, "Connected to Spotify!");
                     onConnectedToSpotify(spotifyAppRemote)
                     _loading.value = null
                 }
@@ -84,7 +84,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                     recentSongArtist = artist
                     recentSongTitle = title
                     Log.d(
-                        "SpotifyLyricsViewModel",
+                        TAG,
                         "$title by $artist"
                     )
                     viewModelScope.launch {
@@ -95,9 +95,11 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
             }
     }
 
-    fun disconnectFromSpotify() =
+    fun disconnectFromSpotify() {
+        Log.d(TAG, "Disconnecting from Spotify")
         spotifyAppRemote?.let {
             SpotifyAppRemote.disconnect(it)
         }
+    }
 
 }

@@ -1,5 +1,6 @@
 package com.example.teksciarz
 
+import com.example.teksciarz.data.GeniusHit
 import com.example.teksciarz.data.GeniusSong
 import com.example.teksciarz.data.Song
 import com.example.teksciarz.network.GeniusService
@@ -15,17 +16,19 @@ class SongRepository(private val geniusService: GeniusService) {
         return song?.let { it.toSong(artist, title, getSongLyrics(it)) }
     }
 
-    private suspend fun getSongLyrics(song: GeniusSong) = withContext(Dispatchers.IO) {
+    private suspend fun getSongLyrics(song: GeniusSong): String {
         val page = getPage(song.url)
-        return@withContext getLyrics(page)
+        return getLyrics(page)
     }
 
-    suspend fun getSongsList(artist: String, title: String) = withContext(Dispatchers.IO) {
+    private suspend fun getSongsList(artist: String, title: String): List<GeniusSong> {
         val list = geniusService.searchSong("$artist $title").response.hits
-        return@withContext withContext(Dispatchers.Main) {
-            list.map { hit ->
-                hit.song
-            }
+        return list.toGeniusSongsList()
+    }
+
+    private suspend fun List<GeniusHit>.toGeniusSongsList() = withContext(Dispatchers.Main) {
+        this@toGeniusSongsList.map { hit ->
+            hit.song
         }
     }
 }
