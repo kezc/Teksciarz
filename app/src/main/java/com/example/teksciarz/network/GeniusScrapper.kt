@@ -8,7 +8,7 @@ import org.jsoup.nodes.Document
 
 fun getPage(url: String): Document {
     val document = Jsoup.connect(url).get()
-    document.select("br").append("\\n")
+    document.select("br").append(System.getProperty("line.separator"))
     return document
 }
 
@@ -21,4 +21,5 @@ fun getLyrics(page: Document): String {
     } else {
         newDiv
     }.text()
+
 }
