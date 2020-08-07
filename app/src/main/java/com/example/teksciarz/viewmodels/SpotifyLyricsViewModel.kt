@@ -14,6 +14,7 @@ import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.Track
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 private const val TAG = "SpotifyLyricsViewModel"
 private const val CLIENT_ID = "a7dc1dd3f7e24e4e9b7fd4a7b7ed93bd"
@@ -34,7 +35,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
     private var recentSongArtist = ""
     private var recentSongTitle = ""
 
-    var spotifyAppRemote: SpotifyAppRemote? = null
+    private var spotifyAppRemote: SpotifyAppRemote? = null
 
     init {
         connectToSpotify()
@@ -78,7 +79,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
             .setEventCallback { playerState ->
                 val track: Track? = playerState.track
                 if (track != null) {
-                    val title = track.name.toString()
+                    val title = track.name
                     val artist = track.artist.name
                     if (title == recentSongTitle && recentSongArtist == artist) return@setEventCallback
                     recentSongArtist = artist
@@ -88,8 +89,12 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                         "$title by $artist"
                     )
                     viewModelScope.launch {
-                        val song = rep.getSongByArtistAndTitle(artist, title)
-                        _currentSong.value = song
+                        try {
+                            val song = rep.getSongByArtistAndTitle(artist, title)
+                            _currentSong.value = song
+                        } catch (e: IOException) {
+                            Log.d(TAG, "Network error")
+                        }
                     }
                 }
             }
