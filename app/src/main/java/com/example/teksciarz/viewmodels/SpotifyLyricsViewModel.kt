@@ -84,10 +84,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                     if (title == recentSongTitle && recentSongArtist == artist) return@setEventCallback
                     recentSongArtist = artist
                     recentSongTitle = title
-//                    val tempSong = track.imageUri.raw?.let { Song(artist, title) }.also {
-//                        _currentSong.value = it
-//                    }
-//                    Log.d(TAG, tempSong.toString())
+                    _loading.value = "Loading $recentSongTitle by $recentSongArtist"
                     viewModelScope.launch {
                         try {
                             val song = rep.getSongByArtistAndTitle(artist, title)
@@ -95,6 +92,8 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                             Log.d(TAG, song.toString())
                         } catch (e: IOException) {
                             Log.d(TAG, "Network exception")
+                        } finally {
+                            _loading.value = null
                         }
                     }
                 }
