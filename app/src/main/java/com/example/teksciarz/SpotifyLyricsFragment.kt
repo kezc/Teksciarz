@@ -1,7 +1,6 @@
 package com.example.teksciarz
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,8 +26,10 @@ class SpotifyLyricsFragment : Fragment() {
             if (song != null) {
                 title.text = song.title
                 artist.text = song.artist
-                song.lyrics?.let {
-                    lyrics.text = it
+                if (!song.lyrics.isNullOrBlank()) {
+                    lyrics.text = song.lyrics
+                } else {
+                    lyrics.text = "Nie moglem znalezc tekstu"
                 }
                 Glide.with(view).load(song.imageUrl).into(cover)
             } else {

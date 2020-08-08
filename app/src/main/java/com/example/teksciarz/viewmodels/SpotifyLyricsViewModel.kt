@@ -59,12 +59,12 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
             connectionParams,
             object : Connector.ConnectionListener {
                 override fun onFailure(throwable: Throwable?) {
-                    Log.e(TAG, throwable!!.message, throwable);
+                    Log.e(TAG, throwable!!.message, throwable)
                     _loading.value = null
                 }
 
                 override fun onConnected(spotifyAppRemote: SpotifyAppRemote) {
-                    Log.d(TAG, "Connected to Spotify!");
+                    Log.d(TAG, "Connected to Spotify!")
                     onConnectedToSpotify(spotifyAppRemote)
                     _loading.value = null
                 }
@@ -84,14 +84,15 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                     if (title == recentSongTitle && recentSongArtist == artist) return@setEventCallback
                     recentSongArtist = artist
                     recentSongTitle = title
-                    Log.d(
-                        TAG,
-                        "$title by $artist"
-                    )
+//                    val tempSong = track.imageUri.raw?.let { Song(artist, title) }.also {
+//                        _currentSong.value = it
+//                    }
+//                    Log.d(TAG, tempSong.toString())
                     viewModelScope.launch {
                         try {
                             val song = rep.getSongByArtistAndTitle(artist, title)
                             _currentSong.value = song
+                            Log.d(TAG, song.toString())
                         } catch (e: IOException) {
                             Log.d(TAG, "Network exception")
                         }
