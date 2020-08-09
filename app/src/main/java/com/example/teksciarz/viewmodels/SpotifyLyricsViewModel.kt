@@ -22,8 +22,8 @@ private const val REDIRECT_URI = "com.example.teksciarz://callback"
 
 class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _currentSong = MutableLiveData<Song?>()
-    val currentSong: LiveData<Song?>
+    private val _currentSong = MutableLiveData<Song>()
+    val currentSong: LiveData<Song>
         get() = _currentSong
 
     private val _loading = MutableLiveData<String?>()
@@ -85,10 +85,22 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                     recentSongArtist = artist
                     recentSongTitle = title
                     _loading.value = "Loading $recentSongTitle by $recentSongArtist"
+                    Log.d(TAG, track.imageUri.raw.toString())
                     viewModelScope.launch {
                         try {
                             val song = rep.getSongByArtistAndTitle(artist, title)
-                            _currentSong.value = song
+                            if (song != null) {
+                                _currentSong.value = song
+                            } else {
+                                // could be await instead of callback but doesnt work >.<
+                                spotifyAppRemote.imagesApi.getImage(track.imageUri)
+                                    .setResultCallback { image ->
+                                        _currentSong.value =
+                                            Song(title, artist, bitmapImage = image)
+                                    }
+
+                            }
+
                             Log.d(TAG, song.toString())
                         } catch (e: IOException) {
                             Log.d(TAG, "Network exception")

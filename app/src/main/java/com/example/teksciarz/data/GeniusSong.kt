@@ -22,6 +22,7 @@ data class GeniusSong(
             artist,
             headerImageUrl,
             headerImageThumbnailUrl,
+            null,
             id,
             url,
             lyrics
