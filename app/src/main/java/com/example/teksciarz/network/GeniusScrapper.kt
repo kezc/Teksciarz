@@ -8,9 +8,10 @@ import org.jsoup.nodes.Document
 
 //https://github.com/johnwmillr/LyricsGenius/blob/30a39f1a87ff9a538c78af11736d5c560381e806/lyricsgenius/api.py#L241
 
+@Suppress("BlockingMethodInNonBlockingContext")
 suspend fun getPage(url: String): Document = withContext(Dispatchers.IO) {
     val document = Jsoup.connect(url).get()
-    document.select("br").append(System.getProperty("line.separator"))
+    document.select("br").append("\\n")
     return@withContext document
 }
 
@@ -22,5 +23,5 @@ fun getLyrics(page: Document): String {
         oldDiv
     } else {
         newDiv
-    }.text()
+    }.text().replace("\\n", System.getProperty("line.separator")!!)
 }
