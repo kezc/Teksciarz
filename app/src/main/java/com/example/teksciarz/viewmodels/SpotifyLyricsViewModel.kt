@@ -12,6 +12,7 @@ import com.example.teksciarz.network.GeniusService
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.Track
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -82,34 +83,41 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                     val title = track.name.toString()
                     val artist = track.artist.name
                     if (title == recentSongTitle && recentSongArtist == artist) return@setEventCallback
+
                     recentSongArtist = artist
                     recentSongTitle = title
+
                     _loading.value = "Loading $recentSongTitle by $recentSongArtist"
-                    Log.d(TAG, track.imageUri.raw.toString())
-                    viewModelScope.launch {
-                        try {
-                            val song = rep.getSongByArtistAndTitle(artist, title)
-                            if (song != null) {
-                                _currentSong.value = song
-                            } else {
-                                // could be await instead of callback but doesnt work >.<
-                                spotifyAppRemote.imagesApi.getImage(track.imageUri)
-                                    .setResultCallback { image ->
-                                        _currentSong.value =
-                                            Song(title, artist, bitmapImage = image)
-                                    }
 
-                            }
-
-                            Log.d(TAG, song.toString())
-                        } catch (e: IOException) {
-                            Log.d(TAG, "Network exception")
-                        } finally {
-                            _loading.value = null
-                        }
-                    }
+                    updateSong(artist, title, track.imageUri)
+                    _loading.value = null
                 }
             }
+    }
+
+    private fun updateSong(
+        artist: String,
+        title: String,
+        spotifyImageUri: ImageUri
+    ) {
+        viewModelScope.launch {
+            try {
+                val song = rep.getSongByArtistAndTitle(artist, title)
+                if (song != null) {
+                    _currentSong.value = song
+                } else {
+                    // could be await instead of callback but doesnt work - https://github.com/spotify/android-sdk/issues/76
+                    spotifyAppRemote?.imagesApi?.getImage(spotifyImageUri)
+                        ?.setResultCallback { image ->
+                            _currentSong.value =
+                                Song(title, artist, bitmapImage = image)
+                        }
+                }
+                Log.d(TAG, song.toString())
+            } catch (e: IOException) {
+                Log.d(TAG, "Network exception")
+            }
+        }
     }
 
     private fun disconnectFromSpotify() {
