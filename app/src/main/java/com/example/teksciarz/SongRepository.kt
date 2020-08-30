@@ -8,19 +8,31 @@ import com.example.teksciarz.db.SongsDao
 import com.example.teksciarz.network.GeniusService
 import com.example.teksciarz.network.getLyrics
 import com.example.teksciarz.network.getPage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 
 class SongRepository(private val geniusService: GeniusService, private val database: SongsDao) {
 
-    suspend fun getSongByArtistAndTitle(artist: String, title: String): Song? =
+
+    @ExperimentalCoroutinesApi
+    @FlowPreview
+    suspend fun getSongByArtistAndTitleWithMultipleRequests(artist: String, title: String) =
+        (1..5).asFlow().flatMapMerge(5) {
+            flow {
+                emit(getSongByArtistAndTitle(artist, title))
+            }
+        }
+            .filterNotNull()
+            .filter { song ->
+                !song.lyrics.isNullOrBlank()
+            }.take(1)
+            .flowOn(Dispatchers.IO)
+
+
+    private suspend fun getSongByArtistAndTitle(artist: String, title: String): Song? =
         withContext(Dispatchers.IO) {
             val defSongFromGenius = async {
-                val geniusSong = getSongsList(artist, title).firstOrNull()
-                val lyrics = geniusSong?.let { getSongLyrics(it) }
-                geniusSong?.toSong(artist, title, lyrics)
+                getSong(artist, title)
             }
 
             val defSongFromDb = async {
@@ -33,25 +45,41 @@ class SongRepository(private val geniusService: GeniusService, private val datab
             }
 
             val songFromGenius = defSongFromGenius.await()
-            launch {
-                songFromGenius?.let { song ->
-                    if (!song.lyrics.isNullOrBlank()) {
-                        database.insertSong(
-                            DbSong(
-                                artist = song.artist,
-                                title = song.title,
-                                lyrics = song.lyrics,
-                                imageUrl = song.imageUrl
-                            )
-                        )
-                    }
-                }
-            }
+            insertSongIfHasLyrics(songFromGenius)
+
             return@withContext songFromGenius
         }
 
+    private suspend fun getSong(
+        artist: String,
+        title: String
+    ): Song? {
+        val geniusSong = getSongsList(artist, title).firstOrNull()
+        val lyrics = geniusSong?.let { getLyrics(it) }
+        return geniusSong?.toSong(artist, title, lyrics)
+    }
 
-    private suspend fun getSongLyrics(song: GeniusSong): String {
+    private fun CoroutineScope.insertSongIfHasLyrics(
+        songFromGenius: Song?
+    ) =
+        launch {
+            songFromGenius?.let { song ->
+                if (!song.lyrics.isNullOrBlank()) {
+                    database.insertSong(
+                        DbSong(
+                            artist = song.artist,
+                            title = song.title,
+                            lyrics = song.lyrics,
+                            imageUrl = song.imageUrl
+                        )
+                    )
+                }
+
+            }
+        }
+
+
+    private suspend fun getLyrics(song: GeniusSong): String {
         val page = getPage(song.url)
         return getLyrics(page)
     }

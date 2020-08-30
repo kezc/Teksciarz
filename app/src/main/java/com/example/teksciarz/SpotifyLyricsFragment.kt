@@ -11,7 +11,13 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.teksciarz.viewmodels.SpotifyLyricsViewModel
 import kotlinx.android.synthetic.main.fragment_spotify_lyrics.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.InternalCoroutinesApi
 
+@ExperimentalCoroutinesApi
+@InternalCoroutinesApi
+@FlowPreview
 class SpotifyLyricsFragment : Fragment() {
     private val viewModel: SpotifyLyricsViewModel by viewModels()
 

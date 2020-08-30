@@ -15,14 +15,20 @@ import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.Track
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEmpty
+import kotlinx.coroutines.flow.onStart
 import java.io.IOException
 
 private const val TAG = "SpotifyLyricsViewModel"
 private const val CLIENT_ID = "a7dc1dd3f7e24e4e9b7fd4a7b7ed93bd"
 private const val REDIRECT_URI = "com.example.teksciarz://callback"
 
+@ExperimentalCoroutinesApi
+@InternalCoroutinesApi
+@FlowPreview
 class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _currentSong = MutableLiveData<Song>()
@@ -107,25 +113,30 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
         spotifyImageUri: ImageUri
     ) =
         viewModelScope.launch {
-            _loading.value = "Loading $recentSongTitle by $recentSongArtist"
-            try {
-                val song = rep.getSongByArtistAndTitle(artist, title)
-                if (song != null) {
-                    _currentSong.value = song
-                } else {
-                    // could be await instead of callback but doesnt work - https://github.com/spotify/android-sdk/issues/76
+            rep.getSongByArtistAndTitleWithMultipleRequests(artist, title)
+                .onStart {
+                    _loading.value = "Loading $recentSongTitle by $recentSongArtist"
+                }
+                .onCompletion {
+                    _loading.value = null
+                }
+                .onEmpty {
                     spotifyAppRemote?.imagesApi?.getImage(spotifyImageUri)
                         ?.setResultCallback { image ->
                             _currentSong.value =
                                 Song(title, artist, bitmapImage = image)
                         }
                 }
-                Log.d(TAG, song.toString())
-            } catch (e: IOException) {
-                Log.d(TAG, "Network exception")
-            }
-            _loading.value = null
-
+                .collect(object : FlowCollector<Song> {
+                    override suspend fun emit(value: Song) {
+                        try {
+                            _currentSong.value = value
+                            Log.d(TAG, value.toString())
+                        } catch (e: IOException) {
+                            Log.d(TAG, "Network exception")
+                        }
+                    }
+                })
         }
 
 
