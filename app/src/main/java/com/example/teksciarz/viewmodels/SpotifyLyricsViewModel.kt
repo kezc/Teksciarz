@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.teksciarz.SongRepository
 import com.example.teksciarz.data.Song
+import com.example.teksciarz.db.SongsDatabase
 import com.example.teksciarz.network.GeniusService
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
@@ -32,7 +33,10 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
         get() = _loading
 
 
-    private val rep = SongRepository(GeniusService.create()) //TODO Move to constructor
+    private val rep = SongRepository(
+        GeniusService.create(),
+        SongsDatabase.getInstance(application).songsDao()
+    ) //TODO Move to constructor
     private var recentSongArtist = ""
     private var recentSongTitle = ""
 
@@ -87,10 +91,8 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                     recentSongArtist = artist
                     recentSongTitle = title
 
-                    _loading.value = "Loading $recentSongTitle by $recentSongArtist"
 
                     updateSong(artist, title, track.imageUri)
-                    _loading.value = null
                 }
             }
     }
@@ -101,6 +103,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
         spotifyImageUri: ImageUri
     ) {
         viewModelScope.launch {
+            _loading.value = "Loading $recentSongTitle by $recentSongArtist"
             try {
                 val song = rep.getSongByArtistAndTitle(artist, title)
                 if (song != null) {
@@ -117,6 +120,8 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
             } catch (e: IOException) {
                 Log.d(TAG, "Network exception")
             }
+            _loading.value = null
+
         }
     }
 
