@@ -15,6 +15,7 @@ import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.Track
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -37,10 +38,13 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
         GeniusService.create(),
         SongsDatabase.getInstance(application).songsDao()
     ) //TODO Move to constructor
+
     private var recentSongArtist = ""
     private var recentSongTitle = ""
 
     var spotifyAppRemote: SpotifyAppRemote? = null
+
+    var gettingSongJob: Job? = null
 
     init {
         connectToSpotify()
@@ -91,8 +95,8 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                     recentSongArtist = artist
                     recentSongTitle = title
 
-
-                    updateSong(artist, title, track.imageUri)
+                    gettingSongJob?.cancel()
+                    gettingSongJob = updateSong(artist, title, track.imageUri)
                 }
             }
     }
@@ -101,7 +105,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
         artist: String,
         title: String,
         spotifyImageUri: ImageUri
-    ) {
+    ) =
         viewModelScope.launch {
             _loading.value = "Loading $recentSongTitle by $recentSongArtist"
             try {
@@ -123,7 +127,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
             _loading.value = null
 
         }
-    }
+
 
     private fun disconnectFromSpotify() {
         Log.d(TAG, "Disconnecting from Spotify")
