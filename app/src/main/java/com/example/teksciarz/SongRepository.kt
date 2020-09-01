@@ -1,5 +1,6 @@
 package com.example.teksciarz
 
+import android.util.Log
 import com.example.teksciarz.data.GeniusHit
 import com.example.teksciarz.data.GeniusSong
 import com.example.teksciarz.data.Song
@@ -10,6 +11,7 @@ import com.example.teksciarz.network.getLyrics
 import com.example.teksciarz.network.getPage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.io.IOException
 
 class SongRepository(private val geniusService: GeniusService, private val database: SongsDao) {
 
@@ -50,13 +52,19 @@ class SongRepository(private val geniusService: GeniusService, private val datab
             return@withContext songFromGenius
         }
 
+    //Is this good place for catching exception?
     private suspend fun getSong(
         artist: String,
         title: String
     ): Song? {
-        val geniusSong = getSongsList(artist, title).firstOrNull()
-        val lyrics = geniusSong?.let { getLyrics(it) }
-        return geniusSong?.toSong(artist, title, lyrics)
+        return try {
+            val geniusSong = getSongsList(artist, title).firstOrNull()
+            val lyrics = geniusSong?.let { getLyrics(it) }
+            geniusSong?.toSong(artist, title, lyrics)
+        } catch (e: IOException) {
+            Log.d("SongRepository", e.message!!)
+            null
+        }
     }
 
     private fun CoroutineScope.insertSongIfHasLyrics(

@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEmpty
 import kotlinx.coroutines.flow.onStart
-import java.io.IOException
 
 private const val TAG = "SpotifyLyricsViewModel"
 private const val CLIENT_ID = "a7dc1dd3f7e24e4e9b7fd4a7b7ed93bd"
@@ -129,12 +128,8 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                 }
                 .collect(object : FlowCollector<Song> {
                     override suspend fun emit(value: Song) {
-                        try {
-                            _currentSong.value = value
-                            Log.d(TAG, value.toString())
-                        } catch (e: IOException) {
-                            Log.d(TAG, "Network exception")
-                        }
+                        _currentSong.value = value
+                        Log.d(TAG, value.toString())
                     }
                 })
         }
