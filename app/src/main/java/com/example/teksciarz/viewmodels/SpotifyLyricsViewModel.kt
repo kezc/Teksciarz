@@ -16,10 +16,8 @@ import com.spotify.android.appremote.api.SpotifyAppRemote
 import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.Track
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.onEmpty
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.*
+import java.io.IOException
 
 private const val TAG = "SpotifyLyricsViewModel"
 private const val CLIENT_ID = "a7dc1dd3f7e24e4e9b7fd4a7b7ed93bd"
@@ -37,6 +35,10 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
     private val _loading = MutableLiveData<String?>()
     val loading: LiveData<String?>
         get() = _loading
+
+    private val _loadingError = MutableLiveData<Boolean>()
+    val loadingError: MutableLiveData<Boolean>
+        get() = _loadingError
 
 
     private val rep = SongRepository(
@@ -120,19 +122,34 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                     _loading.value = null
                 }
                 .onEmpty {
-                    spotifyAppRemote?.imagesApi?.getImage(spotifyImageUri)
-                        ?.setResultCallback { image ->
-                            _currentSong.value =
-                                Song(title, artist, bitmapImage = image)
-                        }
+                    setDataFromSpotify(spotifyImageUri, title, artist)
+                }
+                .catch { e ->
+                    if (e !is IOException) throw e
+                    _loadingError.value = true
+                    setDataFromSpotify(spotifyImageUri, title, artist)
+                    Log.d(TAG, e.message!!)
                 }
                 .collect(object : FlowCollector<Song> {
                     override suspend fun emit(value: Song) {
+                        _loadingError.value = false
                         _currentSong.value = value
                         Log.d(TAG, value.toString())
                     }
                 })
         }
+
+    private fun setDataFromSpotify(
+        spotifyImageUri: ImageUri,
+        title: String,
+        artist: String
+    ) {
+        spotifyAppRemote?.imagesApi?.getImage(spotifyImageUri)
+            ?.setResultCallback { image ->
+                _currentSong.value =
+                    Song(title, artist, bitmapImage = image)
+            }
+    }
 
 
     private fun disconnectFromSpotify() {

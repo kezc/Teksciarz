@@ -10,6 +10,7 @@ import androidx.lifecycle.Observer
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.teksciarz.viewmodels.SpotifyLyricsViewModel
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_spotify_lyrics.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -50,8 +51,6 @@ class SpotifyLyricsFragment : Fragment() {
                 .error(R.drawable.ic_launcher_foreground)
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .into(cover)
-
-
         })
 
         viewModel.loading.observe(viewLifecycleOwner, Observer {
@@ -62,6 +61,22 @@ class SpotifyLyricsFragment : Fragment() {
             } else {
                 loadingLayout.visibility = View.INVISIBLE
                 mainLayout.visibility = View.VISIBLE
+            }
+        })
+
+        var snackbar: Snackbar? = null
+        viewModel.loadingError.observe(viewLifecycleOwner, Observer { shouldShowSnackbar ->
+            if (shouldShowSnackbar) {
+                snackbar =
+                    Snackbar.make(scrollView, "Check your connection", Snackbar.LENGTH_INDEFINITE)
+                        .setAnimationMode(Snackbar.ANIMATION_MODE_SLIDE)
+                        .setAction("Retry") {
+                            //TODO - Send request again
+                        }
+                snackbar?.show()
+            }
+            if (!shouldShowSnackbar && snackbar?.isShown == true) {
+                snackbar?.dismiss()
             }
         })
 

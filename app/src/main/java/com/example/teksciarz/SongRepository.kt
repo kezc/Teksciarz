@@ -1,6 +1,5 @@
 package com.example.teksciarz
 
-import android.util.Log
 import com.example.teksciarz.data.GeniusHit
 import com.example.teksciarz.data.GeniusSong
 import com.example.teksciarz.data.Song
@@ -11,7 +10,6 @@ import com.example.teksciarz.network.getLyrics
 import com.example.teksciarz.network.getPage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.io.IOException
 
 class SongRepository(private val geniusService: GeniusService, private val database: SongsDao) {
 
@@ -57,32 +55,24 @@ class SongRepository(private val geniusService: GeniusService, private val datab
         artist: String,
         title: String
     ): Song? {
-        return try {
-            val geniusSong = getSongsList(artist, title).firstOrNull()
-            val lyrics = geniusSong?.let { getLyrics(it) }
-            geniusSong?.toSong(artist, title, lyrics)
-        } catch (e: IOException) {
-            Log.d("SongRepository", e.message!!)
-            null
-        }
+        val geniusSong = getSongsList(artist, title).firstOrNull()
+        val lyrics = geniusSong?.let { getLyrics(it) }
+        return geniusSong?.toSong(artist, title, lyrics)
     }
 
     private fun CoroutineScope.insertSongIfHasLyrics(
-        songFromGenius: Song?
+        song: Song?
     ) =
         launch {
-            songFromGenius?.let { song ->
-                if (!song.lyrics.isNullOrBlank()) {
-                    database.insertSong(
-                        DbSong(
-                            artist = song.artist,
-                            title = song.title,
-                            lyrics = song.lyrics,
-                            imageUrl = song.imageUrl
-                        )
+            if (song != null && !song.lyrics.isNullOrBlank()) {
+                database.insertSong(
+                    DbSong(
+                        artist = song.artist,
+                        title = song.title,
+                        lyrics = song.lyrics,
+                        imageUrl = song.imageUrl
                     )
-                }
-
+                )
             }
         }
 
