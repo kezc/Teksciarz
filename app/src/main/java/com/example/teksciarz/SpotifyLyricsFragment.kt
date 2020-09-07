@@ -1,6 +1,9 @@
 package com.example.teksciarz
 
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.BackgroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,7 +37,15 @@ class SpotifyLyricsFragment : Fragment() {
             title.text = song.title
             artist.text = song.artist
             if (!song.lyrics.isNullOrBlank()) {
-                lyrics.text = song.lyrics
+//                lyrics.text = song.lyrics
+                val spannableString = SpannableStringBuilder(song.lyrics)
+                spannableString.setSpan(
+                    BackgroundColorSpan(resources.getColor(R.color.colorPrimary)),
+                    0,
+                    spannableString.length - 1,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+                lyrics.text = spannableString
             } else {
                 lyrics.text = "Nie moglem znalezc tekstu"
             }
