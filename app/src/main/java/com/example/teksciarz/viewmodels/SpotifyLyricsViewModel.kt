@@ -48,6 +48,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
 
     private var recentSongArtist = ""
     private var recentSongTitle = ""
+    private lateinit var recentTrackImageUri: ImageUri
 
     var spotifyAppRemote: SpotifyAppRemote? = null
 
@@ -101,19 +102,24 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
 
                     recentSongArtist = artist
                     recentSongTitle = title
+                    recentTrackImageUri = track.imageUri
 
-                    gettingSongJob?.cancel()
-                    gettingSongJob = updateSong(artist, title, track.imageUri)
+                    updateSong(artist, title, recentTrackImageUri)
                 }
             }
+    }
+
+    fun refreshSong() {
+        updateSong(recentSongArtist, recentSongTitle, recentTrackImageUri)
     }
 
     private fun updateSong(
         artist: String,
         title: String,
         spotifyImageUri: ImageUri
-    ) =
-        viewModelScope.launch {
+    ) {
+        gettingSongJob?.cancel()
+        gettingSongJob = viewModelScope.launch {
             rep.getSongByArtistAndTitleWithMultipleRequests(artist, title)
                 .onStart {
                     _loading.value = "Loading $recentSongTitle by $recentSongArtist"
@@ -138,6 +144,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                     }
                 })
         }
+    }
 
     private fun setDataFromSpotify(
         spotifyImageUri: ImageUri,
