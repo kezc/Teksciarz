@@ -17,6 +17,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
+import androidx.transition.Fade
+import androidx.transition.TransitionManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.teksciarz.viewmodels.SpotifyLyricsViewModel
@@ -40,7 +42,10 @@ class SpotifyLyricsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_spotify_lyrics, container, false)
+        return inflater.inflate(R.layout.fragment_spotify_lyrics, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
         val circularProgressDrawable = CircularProgressDrawable(requireContext())
         circularProgressDrawable.strokeWidth = 5f
@@ -56,13 +61,11 @@ class SpotifyLyricsFragment : Fragment() {
             if (!song.lyrics.isNullOrBlank()) {
                 lyrics.text = getSpannableStringWithBackground(song.lyrics, R.color.colorPrimary)
             } else {
-                lyrics.text = "Nie moglem znalezc tekstu"
+                lyrics.text = getString(R.string.lyrics_not_found)
             }
 
             Glide.with(view)
-                .load(
-                    song.imageUrl ?: song.bitmapImage
-                )
+                .load(song.imageUrl ?: song.bitmapImage)
                 .placeholder(circularProgressDrawable)
                 .error(R.drawable.ic_launcher_foreground)
                 .transition(DrawableTransitionOptions.withCrossFade())
@@ -70,11 +73,17 @@ class SpotifyLyricsFragment : Fragment() {
                 .into(cover)
         })
 
-        viewModel.loading.observe(viewLifecycleOwner, Observer {
-            if (it != null) {
+        viewModel.loading.observe(viewLifecycleOwner, Observer { description ->
+            val transition = Fade().apply {
+                addTarget(mainLayout)
+                duration = 600
+            }
+            TransitionManager.beginDelayedTransition(scrollView, transition)
+
+            if (description != null) {
                 loadingLayout.visibility = View.VISIBLE
+                loadingDescription.text = description
                 mainLayout.visibility = View.INVISIBLE
-                loadingDescription.text = it
             } else {
                 loadingLayout.visibility = View.INVISIBLE
                 mainLayout.visibility = View.VISIBLE
@@ -83,12 +92,16 @@ class SpotifyLyricsFragment : Fragment() {
 
         viewModel.loadingError.observe(viewLifecycleOwner, Observer { shouldShowSnackbar ->
             if (shouldShowSnackbar) {
-                snackbar =
-                    Snackbar.make(scrollView, "Check your connection", Snackbar.LENGTH_INDEFINITE)
-                        .setAnimationMode(Snackbar.ANIMATION_MODE_SLIDE)
-                        .setAction("Retry") {
-                            viewModel.refreshSong()
-                        }
+                snackbar = Snackbar
+                    .make(
+                        rootLayout,
+                        getString(R.string.check_connection),
+                        Snackbar.LENGTH_INDEFINITE
+                    )
+                    .setAnimationMode(Snackbar.ANIMATION_MODE_SLIDE)
+                    .setAction(getString(R.string.retry)) {
+                        viewModel.refreshSong()
+                    }
                 snackbar?.show()
             }
             if (!shouldShowSnackbar && snackbar?.isShown == true) {
@@ -112,7 +125,6 @@ class SpotifyLyricsFragment : Fragment() {
             }
         })
 
-        return view
     }
 
     private fun getSpannableStringWithBackground(
@@ -130,7 +142,10 @@ class SpotifyLyricsFragment : Fragment() {
     }
 
     private fun showAppNotFoundDialog() =
-        showDialogWithExit("Spotify app couldn't be found", "Google Play") {
+        showDialogWithExit(
+            getString(R.string.spotify_app_not_found),
+            getString(R.string.google_play)
+        ) {
             val intent = Intent(Intent.ACTION_VIEW).apply {
                 setPackage("com.android.vending")
                 data =
@@ -140,7 +155,7 @@ class SpotifyLyricsFragment : Fragment() {
         }
 
     private fun showAuthorizationFailedDialog() =
-        showDialogWithExit("You must authorize the app.", "Authorize") {
+        showDialogWithExit(getString(R.string.must_authorize_app), getString(R.string.authorize)) {
             viewModel.connectToSpotify()
         }
 
@@ -151,7 +166,7 @@ class SpotifyLyricsFragment : Fragment() {
     ) {
         val builder = AlertDialog.Builder(requireActivity())
         builder.setMessage(message)
-        builder.setNegativeButton("Exit") { _, _ ->
+        builder.setNegativeButton(getString(R.string.exit)) { _, _ ->
             requireActivity().finishAffinity()
         }
         builder.setPositiveButton(positiveActionMessage) { _, _ ->

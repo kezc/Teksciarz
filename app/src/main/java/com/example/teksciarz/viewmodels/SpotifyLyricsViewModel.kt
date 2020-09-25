@@ -151,13 +151,10 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
         title: String,
         artist: String
     ) {
-        spotifyAppRemote?.imagesApi?.getImage(spotifyImageUri)
-            ?.setResultCallback { image ->
-                _currentSong.value =
-                    Song(title, artist, bitmapImage = image)
-            }
+        spotifyAppRemote?.imagesApi?.getImage(spotifyImageUri)?.setResultCallback { image ->
+            _currentSong.value = Song(title, artist, bitmapImage = image)
+        }
     }
-
 
     private fun disconnectFromSpotify() {
         Log.d(TAG, "Disconnecting from Spotify")
@@ -165,5 +162,4 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
             SpotifyAppRemote.disconnect(it)
         }
     }
-
 }

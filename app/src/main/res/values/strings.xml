@@ -79,4 +79,13 @@ I forgot my passport for sure, all for a pretty sky
 Everything you wear, I'll be the one to care
 Softly, you braid your hair, all the angels stare, yeah
 Tell me why, tell me why (Why?)</string>
+    <string name="lyrics_not_found">Lyrics couldn\'t be found</string>
+    <string name="check_connection">Check your connection</string>
+    <string name="retry">Retry</string>
+    <string name="spotify_app_not_found">Spotify app couldn\'t be found</string>
+    <string name="google_play">Google Play</string>
+    <string name="must_authorize_app">You must authorize the app.</string>
+    <string name="authorize">Authorize</string>
+    <string name="exit">Exit</string>
+    <string name="connecting_to_spotify">Connecting to Spotify</string>
 </resources>
