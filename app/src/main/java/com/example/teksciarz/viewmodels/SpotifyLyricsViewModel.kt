@@ -10,6 +10,7 @@ import com.example.teksciarz.SongRepository
 import com.example.teksciarz.data.Song
 import com.example.teksciarz.db.SongsDatabase
 import com.example.teksciarz.network.GeniusService
+import com.example.teksciarz.util.Event
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
@@ -37,8 +38,12 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
         get() = _loading
 
     private val _loadingError = MutableLiveData<Boolean>()
-    val loadingError: MutableLiveData<Boolean>
+    val loadingError: LiveData<Boolean>
         get() = _loadingError
+
+    private val _spotifyAppNotFound = MutableLiveData<Event<Unit>>()
+    val spotifyAppNotFound: LiveData<Event<Unit>>
+        get() = _spotifyAppNotFound
 
 
     private val rep = SongRepository(
@@ -50,9 +55,9 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
     private var recentSongTitle = ""
     private lateinit var recentTrackImageUri: ImageUri
 
-    var spotifyAppRemote: SpotifyAppRemote? = null
+    private var spotifyAppRemote: SpotifyAppRemote? = null
 
-    var gettingSongJob: Job? = null
+    private var gettingSongJob: Job? = null
 
     init {
         connectToSpotify()
@@ -78,6 +83,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                 override fun onFailure(throwable: Throwable?) {
                     Log.e(TAG, throwable!!.message, throwable)
                     _loading.value = null
+                    _spotifyAppNotFound.value = Event(Unit)
                 }
 
                 override fun onConnected(spotifyAppRemote: SpotifyAppRemote) {
@@ -123,26 +129,20 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
             rep.getSongByArtistAndTitleWithMultipleRequests(artist, title)
                 .onStart {
                     _loading.value = "Loading $recentSongTitle by $recentSongArtist"
-                }
-                .onCompletion {
+                }.onCompletion {
                     _loading.value = null
-                }
-                .onEmpty {
+                }.onEmpty {
                     setDataFromSpotify(spotifyImageUri, title, artist)
-                }
-                .catch { e ->
+                }.catch { e ->
                     if (e !is IOException) throw e
                     _loadingError.value = true
                     setDataFromSpotify(spotifyImageUri, title, artist)
                     Log.d(TAG, e.message!!)
+                }.collect { song ->
+                    _loadingError.value = false
+                    _currentSong.value = song
+                    Log.d(TAG, song.toString())
                 }
-                .collect(object : FlowCollector<Song> {
-                    override suspend fun emit(value: Song) {
-                        _loadingError.value = false
-                        _currentSong.value = value
-                        Log.d(TAG, value.toString())
-                    }
-                })
         }
     }
 

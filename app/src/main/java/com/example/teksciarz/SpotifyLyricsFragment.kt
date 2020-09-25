@@ -1,5 +1,8 @@
 package com.example.teksciarz
 
+import android.app.AlertDialog
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableStringBuilder
@@ -92,6 +95,25 @@ class SpotifyLyricsFragment : Fragment() {
             if (!shouldShowSnackbar && snackbar?.isShown == true) {
                 Log.d("SpotifyLyricsFragment", "Dismissing")
                 snackbar?.dismiss()
+            }
+        })
+
+        viewModel.spotifyAppNotFound.observe(viewLifecycleOwner, Observer {
+            it.getContentIfNotHandled()?.let {
+                val builder = AlertDialog.Builder(requireActivity())
+                builder.setMessage("Spotify app couldn't be found")
+                builder.setNegativeButton("Exit") { _, _ ->
+                    requireActivity().finishAffinity()
+                }
+                builder.setPositiveButton("Google Play") { _, _ ->
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        setPackage("com.android.vending")
+                        data =
+                            Uri.parse("https://play.google.com/store/apps/details?id=com.spotify.music")
+                    }
+                    startActivity(intent)
+                }
+                builder.show()
             }
         })
 
