@@ -41,8 +41,8 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
     val loadingError: LiveData<Boolean>
         get() = _loadingError
 
-    private val _spotifyAppNotFound = MutableLiveData<Event<Unit>>()
-    val spotifyAppNotFound: LiveData<Event<Unit>>
+    private val _spotifyAppNotFound = MutableLiveData<Event<Throwable>>()
+    val spotifyAppNotFound: LiveData<Event<Throwable>>
         get() = _spotifyAppNotFound
 
 
@@ -68,7 +68,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
         disconnectFromSpotify()
     }
 
-    private fun connectToSpotify() {
+    fun connectToSpotify() {
         _loading.value = "Connecting to Spotify"
 
         val connectionParams = ConnectionParams.Builder(CLIENT_ID)
@@ -83,7 +83,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
                 override fun onFailure(throwable: Throwable?) {
                     Log.e(TAG, throwable!!.message, throwable)
                     _loading.value = null
-                    _spotifyAppNotFound.value = Event(Unit)
+                    _spotifyAppNotFound.value = Event(throwable)
                 }
 
                 override fun onConnected(spotifyAppRemote: SpotifyAppRemote) {
