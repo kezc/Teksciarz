@@ -14,6 +14,8 @@ import com.example.teksciarz.util.Event
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.Connector
 import com.spotify.android.appremote.api.SpotifyAppRemote
+import com.spotify.android.appremote.api.error.AuthenticationFailedException
+import com.spotify.android.appremote.api.error.SpotifyConnectionTerminatedException
 import com.spotify.protocol.types.ImageUri
 import com.spotify.protocol.types.Track
 import kotlinx.coroutines.*
@@ -56,6 +58,7 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
     private lateinit var recentTrackImageUri: ImageUri
 
     private var spotifyAppRemote: SpotifyAppRemote? = null
+    private var failureCount = 0
 
     private var gettingSongJob: Job? = null
 
@@ -82,11 +85,17 @@ class SpotifyLyricsViewModel(application: Application) : AndroidViewModel(applic
             object : Connector.ConnectionListener {
                 override fun onFailure(throwable: Throwable?) {
                     Log.e(TAG, throwable!!.message, throwable)
+                    if (failureCount < 3 && (throwable is SpotifyConnectionTerminatedException || throwable is AuthenticationFailedException)) {
+                        connectToSpotify()
+                        failureCount++
+                        return
+                    }
                     _loading.value = null
                     _spotifyAppNotFound.value = Event(throwable)
                 }
 
                 override fun onConnected(spotifyAppRemote: SpotifyAppRemote) {
+                    failureCount = 0
                     Log.d(TAG, "Connected to Spotify!")
                     onConnectedToSpotify(spotifyAppRemote)
                     _loading.value = null

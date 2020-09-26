@@ -28,10 +28,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.example.teksciarz.viewmodels.SpotifyLyricsViewModel
 import com.google.android.material.snackbar.Snackbar
-import com.spotify.android.appremote.api.error.AuthenticationFailedException
-import com.spotify.android.appremote.api.error.CouldNotFindSpotifyApp
-import com.spotify.android.appremote.api.error.NotLoggedInException
-import com.spotify.android.appremote.api.error.UserNotAuthorizedException
+import com.spotify.android.appremote.api.error.*
 import kotlinx.android.synthetic.main.fragment_spotify_lyrics.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -63,6 +60,7 @@ class SpotifyLyricsFragment : Fragment() {
         circularProgressDrawable.centerRadius = 30f
         circularProgressDrawable.start()
 
+        //hide internetconntectionstate at start of the fragment
         internetConnectionState.y = -internetConnectionState.height.toFloat()
 
         viewModel.currentSong.observe(viewLifecycleOwner, Observer { song ->
@@ -132,7 +130,7 @@ class SpotifyLyricsFragment : Fragment() {
                             Toast.LENGTH_LONG
                         ).show()
                     is UserNotAuthorizedException -> showAuthorizationFailedDialog()
-                    is AuthenticationFailedException -> Toast.makeText(
+                    is AuthenticationFailedException, is SpotifyConnectionTerminatedException -> Toast.makeText(
                         requireActivity(),
                         "Connecting to Spotify has failed",
                         Toast.LENGTH_LONG

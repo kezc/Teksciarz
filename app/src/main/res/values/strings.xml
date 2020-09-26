@@ -88,4 +88,5 @@ Tell me why, tell me why (Why?)</string>
     <string name="authorize">Authorize</string>
     <string name="exit">Exit</string>
     <string name="connecting_to_spotify">Connecting to Spotify</string>
+    <string name="no_internet_connection">No internet connection</string>
 </resources>

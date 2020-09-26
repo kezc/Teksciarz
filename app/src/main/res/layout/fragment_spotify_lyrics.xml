@@ -129,7 +129,7 @@
         android:layout_height="wrap_content"
         android:background="@color/colorPrimaryDark"
         android:gravity="center"
-        android:text="No internet connection"
+        android:text="@string/no_internet_connection"
         android:textColor="@color/colorBackground"
         android:textSize="16sp"
         android:visibility="visible"
